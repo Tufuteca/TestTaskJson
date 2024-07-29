@@ -32,5 +32,17 @@ public class Main {
         }
     }
 
+    public static LocalTime minFlightTime(TicketsDTO tickets) {
+        return tickets.getTickets().stream()
+                .map(ticket -> {
+                    // Вычисляем общее время полета для каждой записи
+                    LocalDateTime departureDateTime = LocalDateTime.of(ticket.getDepartureDate(), ticket.getDepartureTime());
+                    LocalDateTime arrivalDateTime = LocalDateTime.of(ticket.getArrivalDate(), ticket.getArrivalTime());
+                    return Duration.between(departureDateTime, arrivalDateTime);
+                })
+                //Считаем минимальное время полета для каждой записи
+                .min(Comparator.naturalOrder())
+                .map(duration -> LocalTime.of((int) duration.toHours(), duration.toMinutesPart()))
+                .orElse(null);
     }
 }
