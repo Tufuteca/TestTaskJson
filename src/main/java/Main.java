@@ -9,8 +9,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -27,24 +30,35 @@ public class Main {
         }
 
         if (tickets != null) {
-            System.out.println("Минимальная продолжительность полета: " + minFlightTime(tickets));
+            System.out.println("Минимальная продолжительность полета: ");
+            Map<String, LocalTime> minTimes = minFlightTimePerCarrier(tickets);
+            minTimes.forEach((carrier, time) -> System.out.println(carrier + ": " + time));
             System.out.println("Разница между средней ценой и медианой: "+ calculateMedianAverageDifference(tickets.getTickets()));
         }
     }
 
-    public static LocalTime minFlightTime(TicketsDTO tickets) {
+    public static Map<String, LocalTime> minFlightTimePerCarrier(TicketsDTO tickets) {
         return tickets.getTickets().stream()
-                .map(ticket -> {
-                    // Вычисляем общее время полета для каждой записи
-                    LocalDateTime departureDateTime = LocalDateTime.of(ticket.getDepartureDate(), ticket.getDepartureTime());
-                    LocalDateTime arrivalDateTime = LocalDateTime.of(ticket.getArrivalDate(), ticket.getArrivalTime());
-                    return Duration.between(departureDateTime, arrivalDateTime);
-                })
-                //Считаем минимальное время полета для каждой записи
-                .min(Comparator.naturalOrder())
-                .map(duration -> LocalTime.of((int) duration.toHours(), duration.toMinutesPart()))
-                .orElse(null);
+                // Фильтруем билеты по указанным городам
+                .filter(ticket -> "VVO".equals(ticket.getOrigin()) && "TLV".equals(ticket.getDestination()))
+                .collect(Collectors.groupingBy(TicketDTO::getCarrier,
+                        Collector.of(
+                                () -> new ArrayList<Duration>(),
+                                (list, ticket) -> {
+                                    LocalDateTime departureDateTime = LocalDateTime.of(ticket.getDepartureDate(), ticket.getDepartureTime());
+                                    LocalDateTime arrivalDateTime = LocalDateTime.of(ticket.getArrivalDate(), ticket.getArrivalTime());
+                                    list.add(Duration.between(departureDateTime, arrivalDateTime));
+                                },
+                                (list1, list2) -> { list1.addAll(list2); return list1; },
+                                list -> list.stream()
+                                        .min(Comparator.naturalOrder())
+                                        .map(duration -> LocalTime.of((int) duration.toHours(), duration.toMinutesPart()))
+                                        .orElse(null)
+                        )
+                ));
     }
+
+
 
 
     public static double calculateMedianAverageDifference(List<TicketDTO> tickets) {
