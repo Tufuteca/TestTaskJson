@@ -45,4 +45,43 @@ public class Main {
                 .map(duration -> LocalTime.of((int) duration.toHours(), duration.toMinutesPart()))
                 .orElse(null);
     }
+
+
+    public static double calculateMedianAverageDifference(List<TicketDTO> tickets) {
+        if (tickets == null || tickets.isEmpty()) {
+            throw new IllegalArgumentException("Список билетов не должен быть пустым");
+        }
+
+        // Фильтруем билеты по маршруту Владивосток - Тель-Авив
+        List<Integer> prices = tickets.stream()
+                .filter(ticket -> "VVO".equals(ticket.getOrigin()) && "TLV".equals(ticket.getDestination()))
+                .map(TicketDTO::getPrice)
+                .collect(Collectors.toList());
+
+        if (prices.isEmpty()) {
+            throw new IllegalArgumentException("Нет билетов по указанному маршруту");
+        }
+
+        // Вычисление средней цены
+        double averagePrice = prices.stream()
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(Double.NaN);
+
+        // Вычисление медианы
+        List<Integer> sortedPrices = prices.stream()
+                .sorted()
+                .collect(Collectors.toList());
+
+        double median;
+        int size = sortedPrices.size();
+        if (size % 2 == 0) { //Если количество четное
+            median = (sortedPrices.get(size / 2 - 1) + sortedPrices.get(size / 2)) / 2.0;
+        } else {
+            median = sortedPrices.get(size / 2);
+        }
+
+        // Разница между медианой и средней ценой
+        return median - averagePrice;
+    }
 }
