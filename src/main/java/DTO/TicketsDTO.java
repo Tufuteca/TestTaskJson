@@ -1,9 +1,15 @@
 package DTO;
 
-import lombok.Data;
 import java.util.List;
 
-@Data
 public class TicketsDTO {
     private List<TicketDTO> tickets;
+
+    public List<TicketDTO> getTickets() {
+        return tickets;
+    }
+
+    public void setTickets(List<TicketDTO> tickets) {
+        this.tickets = tickets;
+    }
 }
